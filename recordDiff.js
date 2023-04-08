@@ -289,24 +289,13 @@ function capitalize(word) {
          word.slice(1) .toLowerCase();
 }
 
-function by(keys, direction = 'asc') {
-  if (!Array.isArray(keys)) keys = [keys];
-  direction = direction.toLowerCase();
-
-  if (direction.startsWith('asc')) {
-    direction = 'asc';
-
-  } else if (direction.startsWith('desc')) {
-    direction = 'desc';
-
-  } else {
-    throw new Error('Sort by() direction must be either "asc" or "desc". Provided:', direction);
-  }
-
+function by(keys) {
   return function sortBy(first, second) {
     for (const key of keys) {
-      if (first[key] < second[key]) return direction === 'asc' ? -1 : 1;
-      if (first[key] > second[key]) return direction === 'asc' ? 1 : -1;
+      const firstVal = first[key];
+      const secondVal = second[key];
+      if (firstVal < secondVal) return -1;
+      if (firstVal > secondVal) return 1;
     }
     return 0;
   }
