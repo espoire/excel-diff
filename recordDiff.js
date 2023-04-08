@@ -1,3 +1,7 @@
+// TODOs
+// Fix ESLint
+// Cache the raw record strings at construction so we don't need to re-generate them at the end.
+
 function alignForComparison(control, test, mustMatches = []) {
   const controlRecords = toRecords(control);
   const    testRecords = toRecords(test);
