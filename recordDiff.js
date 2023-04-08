@@ -130,10 +130,13 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
     })
   }
 
-  if (mustMatches.length > 0) pairs.sort(function (a, b) {
+  if (mustMatches.length > 0) pairs.sort(function pairsSorter(a, b) {
+    const aRecord = (a.control || a.test);
+    const bRecord = (b.control || b.test);
+
     for (const field of mustMatches) {
-      const aVal = (a.control || a.test)[field];
-      const bVal = (b.control || b.test)[field];
+      const aVal = aRecord[field];
+      const bVal = bRecord[field];
       if (aVal < bVal) return -1;
       if (aVal > bVal) return 1;
     }
@@ -300,7 +303,7 @@ function by(keys, direction = 'asc') {
     throw new Error('Sort by() direction must be either "asc" or "desc". Provided:', direction);
   }
 
-  return function(first, second) {
+  return function sortBy(first, second) {
     for (const key of keys) {
       if (first[key] < second[key]) return direction === 'asc' ? -1 : 1;
       if (first[key] > second[key]) return direction === 'asc' ? 1 : -1;
