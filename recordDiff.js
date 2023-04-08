@@ -54,13 +54,11 @@ function recordToDataArray(fields, record) {
 
 function validateFields(controlFields, testFields) {
   if (controlFields.length !== testFields.length) {
-    throw new Error('Data does not have the same number of columns!', controlFields, testFields);
+    console.error('Data does not have the same number of columns!', controlFields, testFields);
+    throw new Error('Data does not have the same number of columns!');
   }
 
-  if (!memberwiseArrayEquals(
-    controlFields,
-    testFields
-  )) {
+  if (!memberwiseArrayEquals(controlFields, testFields)) {
     console.warn('Column headers not equal.', controlFields, testFields);
   }
 }
@@ -85,6 +83,8 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
 
   let unpairedControls = [...controlRecords.records];
   let unpairedTests    = [...   testRecords.records];
+  unpairedControls.start = 0;
+  unpairedTests   .start = 0;
 
   /** @type {{control: object, test: object}[]} */
   const pairs = [];
@@ -92,10 +92,10 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
   let comparisons = 0;
   for (let maxDiffs = 0; maxDiffs <= fieldCount; maxDiffs++) {
 
-    for(let i = 0; i < unpairedControls.length; i++) {
+    for(let i = unpairedControls.start; i < unpairedControls.length; i++) {
       const control = unpairedControls[i];
 
-      for(let j = 0; j < unpairedTests.length; j++) {
+      for(let j = unpairedTests.start; j < unpairedTests.length; j++) {
         const test = unpairedTests[j];
 
         comparisons++;
@@ -106,8 +106,8 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
           test
         });
 
-        quickArrayRemove(unpairedControls, i--);
-        quickArrayRemove(unpairedTests, j);
+        quickerArrayRemove(unpairedControls, i);
+        quickerArrayRemove(unpairedTests, j);
 
         break;
       }
@@ -143,9 +143,8 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
   return pairs;
 }
 
-function quickArrayRemove(array, index) {
-  array[index] = array[array.length - 1];
-  array.length--;
+function quickerArrayRemove(array, index) {
+  array[index] = array[array.start++];
 }
 
 function matches(record1, record2, mustMatches, optionalMatches, maxDiffs) {
