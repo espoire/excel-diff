@@ -116,14 +116,16 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
 
   console.log(comparisons);
 
-  for (const control of unpairedControls) {
+  for(let i = unpairedControls.start; i < unpairedControls.length; i++) {
+    const control = unpairedControls[i];
     pairs.push({
       control,
       test: null
     })
   }
 
-  for (const test of unpairedTests) {
+  for(let j = unpairedTests.start; j < unpairedTests.length; j++) {
+    const test = unpairedTests[j];
     pairs.push({
       control: null,
       test
