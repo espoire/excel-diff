@@ -239,14 +239,12 @@ function toRecords(raw) {
 function logPerformance(fn, ...args) {
   const startTimeMillis = window.performance.now();
   
-  const value = fn.apply(null, args);
+  const value = fn(...args);
   
   const endTimeMillis = window.performance.now();
   const elapsedMillis = endTimeMillis - startTimeMillis;
   
-  const performance = {
-    elapsedMillis
-  };
+  const performance = { elapsedMillis };
   
   if (isObject(value)) {
     if (typeof value.count === 'number') {
@@ -254,10 +252,9 @@ function logPerformance(fn, ...args) {
       performance.millisPerRecord = millisPerRecord;
     }
     
-    return {
-      performance,
-      ...value
-    };
+    value.performance = performance;
+
+    return value;
   }
   
   return {
