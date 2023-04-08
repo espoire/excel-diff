@@ -214,7 +214,7 @@ function toRecords(raw) {
   );
   
   const headers = tokens[0]; 
-  const fields = tokens[0].map(toFieldName);
+  const fields = headers.map(toFieldName);
   const records = [];
   
   for (let i = 1; i < tokens.length; i++) {
