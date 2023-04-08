@@ -198,11 +198,20 @@ function memberwiseArrayEquals(array1, array2) {
 }
 
 function toRecords(raw) {
-  const lines = raw.split('\n')
-    .filter(line => line.length > 0);
-  const tokens = lines.map(line =>
-    line.split('\t')
-  ).map(line => line.map(token => token.trim()));
+  const lines = raw.split('\n').filter(
+    function filterBlankLines(line) {
+      return line.length > 0;
+    }
+  );
+
+  function trimToken(token) {
+    return token.trim();
+  }
+  const tokens = lines.map(
+    function splitByTabs(line) {
+      return line.split('\t').map(trimToken);
+    }
+  );
   
   const headers = tokens[0]; 
   const fields = tokens[0].map(toFieldName);
