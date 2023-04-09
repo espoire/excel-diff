@@ -236,7 +236,15 @@ function toRecord(line) {
 }
 
 function toRecords(raw) {
-  const tokens = raw.split('\n').filter(blankLines).map(toRecord);
+  const tokens = raw.split('\n').filter(blankLines);
+
+  // Replace in-place (instead of .map()) for memory usage.
+  // No helper function for function call overhead.
+  // (This section is HOT.)
+  for (let i = 0; i < tokens.length; i++) {
+    tokens[i] = toRecord(tokens[i]);
+  }
+
   const headers = tokens[0];
   tokens.shift();
 
