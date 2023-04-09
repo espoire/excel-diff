@@ -311,5 +311,3 @@ function by(keys) {
     return 0;
   }
 }
-
-logPerformance(alignForComparison, control, test, ['case', 'person', 'provider', 'check date']);
