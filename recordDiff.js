@@ -126,7 +126,7 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
   return flatten(pairs);
 }
 
-// How to combine arrays?
+// How to combine arrays fastest?
 // [[]].flat() ?
 // Array.prototype.concat(...[[]])?
 // Manual loop?
