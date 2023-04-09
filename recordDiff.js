@@ -11,7 +11,11 @@ function alignForComparison(control, test, mustMatches = []) {
   validateMustMatches(controlRecords.fields, testRecords.fields, mustMatches);
 
   const pairs = pairRecords(controlRecords, testRecords, mustMatches);
-  const pasteableText = toExcelPastable(controlRecords.headers, testRecords.headers, controlRecords.fields, testRecords.fields, pairs);
+  const pasteableText = toExcelPastable(
+    controlRecords.headers,
+    testRecords.headers,
+    pairs
+  );
   copy(pasteableText);
 
   return {
@@ -20,7 +24,7 @@ function alignForComparison(control, test, mustMatches = []) {
   };
 }
 
-function toExcelPastable(controlHeaders, testHeaders, controlFields, testFields, pairs) {
+function toExcelPastable(controlHeaders, testHeaders, pairs) {
   const lines = [];
 
   const headers = [
