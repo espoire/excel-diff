@@ -1,5 +1,6 @@
 // TODOs
-// Cache the raw record strings at construction so we don't need to re-generate them at the end.
+// Store records as arrays, not dicts
+// Group records by mustMatches
 
 function alignForComparison(control, test, mustMatches = []) {
   const controlRecords = toRecords(control);
@@ -33,26 +34,14 @@ function toExcelPastable(controlHeaders, testHeaders, controlFields, testFields,
   for (const pair of pairs) {
     lines.push(
       [
-        ...recordToDataArray(controlFields, pair.control),
+        pair.control._raw,
         '',
-        ...recordToDataArray(testFields, pair.test),
+        pair.test._raw,
       ].join('\t')
     );
   }
 
   return lines.join('\n');
-}
-
-function recordToDataArray(fields, record) {
-  if (record == null) return fields.map(x => null);
-
-  const ret = [];
-
-  for (const field of fields) {
-    ret.push(record[field]);
-  }
-
-  return ret;
 }
 
 function validateFields(controlFields, testFields) {
@@ -167,28 +156,6 @@ function matches(record1, record2, mustMatches, optionalMatches, maxDiffs) {
   return (diffs <= maxDiffs);
 }
 
-function binarySearchArrayIncludes(sortedArray, searchElement) {
-  let min = 0;
-  let max = sortedArray.length - 1;
-
-  while (min < max) {
-    const test = Math.floor((min + max) / 2);
-    const element = sortedArray[test];
-
-    if (element < searchElement) {
-      min = test + 1;
-
-    } else if (element > searchElement) {
-      max = test - 1;
-
-    } else {
-      return true;
-    }
-  }
-
-  return (min === max && sortedArray[min] == searchElement);
-}
-
 function memberwiseArrayEquals(array1, array2) {
   if (array1.length !== array2.length) return false;
   const length = array1.length;
@@ -227,6 +194,8 @@ function toRecords(raw) {
     for (let j = 0; j < fields.length; j++) {
       record[fields[j]] = tokenRow[j];
     }
+
+    record._raw = lines[i];
     
     records.push(record);
   }
