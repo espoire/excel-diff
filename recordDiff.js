@@ -90,22 +90,19 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
   controlRecords.tokens.sort(by(mustMatchIndecies));
   testRecords   .tokens.sort(by(mustMatchIndecies));
 
-  // TODO remove the array copy?
-  let unpairedControls = [...controlRecords.tokens];
-  let unpairedTests    = [...   testRecords.tokens];
-  unpairedControlsStart = 0;
-  unpairedTestsStart    = 0;
+  let controlStart = 0;
+  let testStart    = 0;
 
   /** @type {{control: object, test: object}[]} */
   const pairs = [];
   let comparisons = 0;
   for (let maxDiffs = 0; maxDiffs <= fieldCount; maxDiffs++) {
 
-    for(let i = unpairedControlsStart; i < unpairedControls.length; i++) {
-      const control = unpairedControls[i];
+    for(let i = controlStart; i < controlRecords.tokens.length; i++) {
+      const control = controlRecords.tokens[i];
 
-      for(let j = unpairedTestsStart; j < unpairedTests.length; j++) {
-        const test = unpairedTests[j];
+      for(let j = testStart; j < testRecords.tokens.length; j++) {
+        const test = testRecords.tokens[j];
 
         comparisons++;
         if (!matches(control, test, mustMatchIndecies, optionalMatchIndecies, maxDiffs)) continue;
@@ -120,8 +117,8 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
         // onto the arrays forced the Chromium engine to use unoptimized
         // implementation of arrays-with-props, instead of the standard
         // array type.
-        unpairedControls[i] = unpairedControls[unpairedControlsStart++];
-        unpairedTests[j] = unpairedTests[unpairedTestsStart++];
+        controlRecords.tokens[i] = controlRecords.tokens[controlStart++];
+        testRecords.tokens[j] = testRecords.tokens[testStart++];
 
         break;
       }
@@ -131,17 +128,17 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
   // TODO move into return value
   console.log(comparisons);
 
-  for(let i = unpairedControlsStart; i < unpairedControls.length; i++) {
+  for(let i = controlStart; i < controlRecords.tokens.length; i++) {
     pairs.push({
-      control: unpairedControls[i],
+      control: controlRecords.tokens[i],
       test: null
     });
   }
 
-  for(let j = unpairedTestsStart; j < unpairedTests.length; j++) {
+  for(let j = testStart; j < testRecords.tokens.length; j++) {
     pairs.push({
       control: null,
-      test: unpairedTests[j]
+      test: testRecords.tokens[j]
     });
   }
 
