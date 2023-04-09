@@ -24,15 +24,15 @@ function alignForComparison(control, test, mustMatches = []) {
 }
 
 function toExcelPastable(controlHeaders, testHeaders, pairs) {
-  const numColumns = controlHeaders.length;
-
+  
   const lines = [];
   
+  const numColumns = controlHeaders.length - 1;
   const headers = [
-    ...controlHeaders,
+    controlHeaders[numColumns],
     '',
-    ...testHeaders
-  ]
+    testHeaders[numColumns]
+  ];
   
   lines.push(headers.join('\t'));
   
