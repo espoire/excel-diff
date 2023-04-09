@@ -115,7 +115,6 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
     pairs.push(pairRecordsInner(
       control,
       test,
-      mustMatchIndecies,
       optionalMatchIndecies,
       fieldCount
     ));
@@ -137,7 +136,12 @@ function flatten(pairs) {
 }
 
 let comparisons = 0;
-function pairRecordsInner(controlRecords, testRecords, mustMatchIndecies, optionalMatchIndecies, diffLimit = 0) {
+function pairRecordsInner(controlRecords, testRecords, optionalMatchIndecies, diffLimit = 0) {
+  if (controlRecords.length === 1 && testRecords.length === 1) return [{
+    control: controlRecords[0],
+    test: testRecords[0]
+  }];
+
   let controlStart = 0;
   let testStart    = 0;
 
@@ -152,18 +156,13 @@ function pairRecordsInner(controlRecords, testRecords, mustMatchIndecies, option
         const test = testRecords[j];
 
         comparisons++;
-        if (!matches(control, test, mustMatchIndecies, optionalMatchIndecies, maxDiffs)) continue;
+        if (!differenceCountIsLessThanLimit(control, test, optionalMatchIndecies, maxDiffs)) continue;
 
         pairs.push({
           control,
           test
         });
 
-        // TODO create managed array class?
-        // Needed to inline for performance; adding the .start property
-        // onto the arrays forced the Chromium engine to use unoptimized
-        // implementation of arrays-with-props, instead of the standard
-        // array type.
         controlRecords[i] = controlRecords[controlStart++];
         testRecords[j] = testRecords[testStart++];
 
@@ -189,11 +188,7 @@ function pairRecordsInner(controlRecords, testRecords, mustMatchIndecies, option
   return pairs;
 }
 
-function matches(record1, record2, mustMatchIndecies, optionalMatchIndecies, maxDiffs) {
-  for(const i of mustMatchIndecies) {
-    if (record1[i] !== record2[i]) return false;
-  }
-
+function differenceCountIsLessThanLimit(record1, record2, optionalMatchIndecies, maxDiffs) {
   let diffs = 0;
   for(const i of optionalMatchIndecies) {
     if (record1[i] !== record2[i]) diffs++;
