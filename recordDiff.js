@@ -28,22 +28,19 @@ function toExcelPastable(controlHeaders, testHeaders, pairs) {
   const lines = [];
   
   const numColumns = controlHeaders.length - 1;
-  const headers = [
-    controlHeaders[numColumns],
-    '',
-    testHeaders[numColumns]
-  ];
+  const headers =
+    controlHeaders[numColumns] +
+    '\t\t' +
+    testHeaders[numColumns];
   
-  lines.push(headers.join('\t'));
+  lines.push(headers);
   
   const placeholderTsv = repeat('\t', numColumns - 1);
   for (const pair of pairs) {
     lines.push(
-      [
-        pair.control ? pair.control[numColumns] : placeholderTsv,
-        '',
-        pair.test ? pair.test[numColumns] : placeholderTsv,
-      ].join('\t')
+      (pair.control ? pair.control[numColumns] : placeholderTsv) +
+      '\t\t' +
+      (pair.test ? pair.test[numColumns] : placeholderTsv)
     );
   }
 
