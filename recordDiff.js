@@ -1,6 +1,3 @@
-// TODOs
-// Group records by mustMatches
-
 function alignForComparison(control, test, mustMatches = []) {
   const controlRecords = toRecords(control);
   const    testRecords = toRecords(test);
@@ -77,6 +74,26 @@ function allIntegersLessThan(max) {
   return ret;
 }
 
+function groupArrayMembersBy(array, keys) {
+  const map = new Map();
+
+  for(const record of array) {
+    const key = keys.map(k => record[k]).join('\t');
+
+    let list;
+    if (map.has(key)) {
+      list = map.get(key);
+    } else {
+      list = [];
+      map.set(key, list);
+    }
+
+    list.push(record);
+  }
+
+  return map;
+}
+
 function pairRecords(controlRecords, testRecords, mustMatches) {
   const fieldCount = controlRecords.fields.length;
 
@@ -87,22 +104,52 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
     !mustMatchIndecies.includes(index)
   );
 
-  controlRecords.tokens.sort(by(mustMatchIndecies));
-  testRecords   .tokens.sort(by(mustMatchIndecies));
+  const controlMap = groupArrayMembersBy(controlRecords.tokens, mustMatchIndecies);
+  const testMap = groupArrayMembersBy(testRecords.tokens, mustMatchIndecies);
 
+  let pairs = [];
+  for (const key of controlMap.keys()) {
+    const control = controlMap.get(key);
+    const test = testMap.get(key) || [];
+
+    pairs.push(pairRecordsInner(
+      control,
+      test,
+      mustMatchIndecies,
+      optionalMatchIndecies,
+      fieldCount
+    ));
+  }
+
+  // TODO move into return value
+  console.log(comparisons);
+
+  return flatten(pairs);
+}
+
+// How to combine arrays?
+// [[]].flat() ?
+// Array.prototype.concat(...[[]])?
+// Manual loop?
+// Grow as we go?
+function flatten(pairs) {
+  return pairs.flat();
+}
+
+let comparisons = 0;
+function pairRecordsInner(controlRecords, testRecords, mustMatchIndecies, optionalMatchIndecies, diffLimit = 0) {
   let controlStart = 0;
   let testStart    = 0;
 
   /** @type {{control: object, test: object}[]} */
   const pairs = [];
-  let comparisons = 0;
-  for (let maxDiffs = 0; maxDiffs <= fieldCount; maxDiffs++) {
+  for (let maxDiffs = 0; maxDiffs <= diffLimit; maxDiffs++) {
 
-    for(let i = controlStart; i < controlRecords.tokens.length; i++) {
-      const control = controlRecords.tokens[i];
+    for(let i = controlStart; i < controlRecords.length; i++) {
+      const control = controlRecords[i];
 
-      for(let j = testStart; j < testRecords.tokens.length; j++) {
-        const test = testRecords.tokens[j];
+      for(let j = testStart; j < testRecords.length; j++) {
+        const test = testRecords[j];
 
         comparisons++;
         if (!matches(control, test, mustMatchIndecies, optionalMatchIndecies, maxDiffs)) continue;
@@ -117,43 +164,27 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
         // onto the arrays forced the Chromium engine to use unoptimized
         // implementation of arrays-with-props, instead of the standard
         // array type.
-        controlRecords.tokens[i] = controlRecords.tokens[controlStart++];
-        testRecords.tokens[j] = testRecords.tokens[testStart++];
+        controlRecords[i] = controlRecords[controlStart++];
+        testRecords[j] = testRecords[testStart++];
 
         break;
       }
     }
   }
 
-  // TODO move into return value
-  console.log(comparisons);
-
-  for(let i = controlStart; i < controlRecords.tokens.length; i++) {
+  for(let i = controlStart; i < controlRecords.length; i++) {
     pairs.push({
-      control: controlRecords.tokens[i],
+      control: controlRecords[i],
       test: null
     });
   }
 
-  for(let j = testStart; j < testRecords.tokens.length; j++) {
+  for(let j = testStart; j < testRecords.length; j++) {
     pairs.push({
       control: null,
-      test: testRecords.tokens[j]
+      test: testRecords[j]
     });
   }
-
-  if (mustMatchIndecies.length > 0) pairs.sort(function pairsSorter(a, b) {
-    const aRecord = (a.control || a.test);
-    const bRecord = (b.control || b.test);
-
-    for (const i of mustMatchIndecies) {
-      const aVal = aRecord[i];
-      const bVal = bRecord[i];
-      if (aVal < bVal) return -1;
-      if (aVal > bVal) return 1;
-    }
-    return 0;
-  });
 
   return pairs;
 }
@@ -298,5 +329,3 @@ function by(keys) {
     return 0;
   }
 }
-
-logPerformance(alignForComparison, control, test, ['case', 'person', 'provider', 'check date']);
