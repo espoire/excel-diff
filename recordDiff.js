@@ -25,27 +25,34 @@ function alignForComparison(control, test, mustMatches = []) {
 }
 
 function toExcelPastable(controlHeaders, testHeaders, pairs) {
-  const lines = [];
+  const numColumns = controlHeaders.length;
 
+  const lines = [];
+  
   const headers = [
     ...controlHeaders,
     '',
     ...testHeaders
   ]
-
+  
   lines.push(headers.join('\t'));
-
+  
+  const placeholderTsv = repeat('\t', numColumns - 1);
   for (const pair of pairs) {
     lines.push(
       [
-        pair.control._raw,
+        pair.control ? pair.control[numColumns] : placeholderTsv,
         '',
-        pair.test._raw,
+        pair.test ? pair.test[numColumns] : placeholderTsv,
       ].join('\t')
     );
   }
 
   return lines.join('\n');
+}
+
+function repeat(string, times) {
+  return new Array(times + 1).join(string);
 }
 
 function validateFields(controlFields, testFields) {
@@ -71,70 +78,89 @@ function validateMustMatches(controlFields, testFields, mustMatches) {
   }
 }
 
+function allIntegersLessThan(max) {
+  const ret = [];
+  for (let n = 0; n < max; n++) ret.push(n);
+  return ret;
+}
+
 function pairRecords(controlRecords, testRecords, mustMatches) {
-  optionalMatches = controlRecords.fields.filter(field => !mustMatches.includes(field));
+  const fieldCount = controlRecords.fields.length;
 
-  controlRecords.records.sort(by(mustMatches));
-  testRecords   .records.sort(by(mustMatches));
+  // TODO move to helper
+  const mustMatchIndecies = mustMatches.map(field =>
+    controlRecords.fields.indexOf(field)
+  );
+  optionalMatchIndecies = allIntegersLessThan(fieldCount).filter(index =>
+    !mustMatchIndecies.includes(index)
+  );
 
-  let unpairedControls = [...controlRecords.records];
-  let unpairedTests    = [...   testRecords.records];
-  unpairedControls.start = 0;
-  unpairedTests   .start = 0;
+  // TODO move to helper
+  controlRecords.tokens.sort(by(mustMatchIndecies));
+  testRecords   .tokens.sort(by(mustMatchIndecies));
+
+  // TODO remove the array copy?
+  let unpairedControls = [...controlRecords.tokens];
+  let unpairedTests    = [...   testRecords.tokens];
+  unpairedControlsStart = 0;
+  unpairedTestsStart    = 0;
 
   /** @type {{control: object, test: object}[]} */
   const pairs = [];
-  const fieldCount = controlRecords.fields.length;
   let comparisons = 0;
   for (let maxDiffs = 0; maxDiffs <= fieldCount; maxDiffs++) {
 
-    for(let i = unpairedControls.start; i < unpairedControls.length; i++) {
+    for(let i = unpairedControlsStart; i < unpairedControls.length; i++) {
       const control = unpairedControls[i];
 
-      for(let j = unpairedTests.start; j < unpairedTests.length; j++) {
+      for(let j = unpairedTestsStart; j < unpairedTests.length; j++) {
         const test = unpairedTests[j];
 
         comparisons++;
-        if (!matches(control, test, mustMatches, optionalMatches, maxDiffs)) continue;
+        if (!matches(control, test, mustMatchIndecies, optionalMatchIndecies, maxDiffs)) continue;
 
         pairs.push({
           control,
           test
         });
 
-        quickerArrayRemove(unpairedControls, i);
-        quickerArrayRemove(unpairedTests, j);
+        // TODO create managed array class?
+        // Needed to inline for performance; adding the .start property
+        // onto the arrays forced the Chromium engine to use unoptimized
+        // implementation of arrays-with-props, instead of the standard
+        // array type.
+        unpairedControls[i] = unpairedControls[unpairedControlsStart++];
+        unpairedTests[j] = unpairedTests[unpairedTestsStart++];
 
         break;
       }
     }
   }
 
+  // TODO move into return value
   console.log(comparisons);
 
-  for(let i = unpairedControls.start; i < unpairedControls.length; i++) {
-    const control = unpairedControls[i];
+  for(let i = unpairedControlsStart; i < unpairedControls.length; i++) {
     pairs.push({
-      control,
+      control: unpairedControls[i],
       test: null
-    })
+    });
   }
 
-  for(let j = unpairedTests.start; j < unpairedTests.length; j++) {
-    const test = unpairedTests[j];
+  for(let j = unpairedTestsStart; j < unpairedTests.length; j++) {
     pairs.push({
       control: null,
-      test
-    })
+      test: unpairedTests[j]
+    });
   }
 
-  if (mustMatches.length > 0) pairs.sort(function pairsSorter(a, b) {
+  if (mustMatchIndecies.length > 0) pairs.sort(function pairsSorter(a, b) {
     const aRecord = (a.control || a.test);
     const bRecord = (b.control || b.test);
 
-    for (const field of mustMatches) {
-      const aVal = aRecord[field];
-      const bVal = bRecord[field];
+    for (const i of mustMatchIndecies) {
+      const aVal = aRecord[i];
+      const bVal = bRecord[i];
       if (aVal < bVal) return -1;
       if (aVal > bVal) return 1;
     }
@@ -144,18 +170,14 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
   return pairs;
 }
 
-function quickerArrayRemove(array, index) {
-  array[index] = array[array.start++];
-}
-
-function matches(record1, record2, mustMatches, optionalMatches, maxDiffs) {
-  for(const field of mustMatches) {
-    if (record1[field] !== record2[field]) return false;
+function matches(record1, record2, mustMatchIndecies, optionalMatchIndecies, maxDiffs) {
+  for(const i of mustMatchIndecies) {
+    if (record1[i] !== record2[i]) return false;
   }
 
   let diffs = 0;
-  for(const field of optionalMatches) {
-    if (record1[field] !== record2[field]) diffs++;
+  for(const i of optionalMatchIndecies) {
+    if (record1[i] !== record2[i]) diffs++;
   }
   return (diffs <= maxDiffs);
 }
@@ -171,44 +193,40 @@ function memberwiseArrayEquals(array1, array2) {
   return true;
 }
 
+// This function only given a name to make the profiling logs more readable.
+// Otherwise, we'd just use an arrow function in-line.
+function trim(token) {
+  return token.trim();
+}
+
+// This function only given a name to make the profiling logs more readable.
+// Otherwise, we'd just use an arrow function in-line.
+function blankLines(line) {
+  return line.length > 0;
+}
+
+// This function only given a name to make the profiling logs more readable.
+// Otherwise, we'd just use an arrow function in-line.
+function toRecord(line) {
+  const record = line.split('\t').map(trim);
+  record.push(line);
+  return record;
+}
+
 function toRecords(raw) {
-  const lines = raw.split('\n').filter(
-    function filterBlankLines(line) {
-      return line.length > 0;
-    }
-  );
+  const tokens = raw.split('\n').filter(blankLines).map(toRecord);
+  const headers = tokens[0];
+  tokens.shift();
 
-  function trimToken(token) {
-    return token.trim();
-  }
-  const tokens = lines.map(
-    function splitByTabs(line) {
-      return line.split('\t').map(trimToken);
-    }
-  );
-  
-  const headers = tokens[0]; 
-  const fields = headers.map(toFieldName);
-  const records = [];
-  
-  for (let i = 1; i < tokens.length; i++) {
-    const tokenRow = tokens[i];
-    const record = {};
-    
-    for (let j = 0; j < fields.length; j++) {
-      record[fields[j]] = tokenRow[j];
-    }
+  let fields = [...headers];
+  fields.pop();
+  fields = fields.map(toFieldName);
 
-    record._raw = lines[i];
-    
-    records.push(record);
-  }
-  
   return {
+    tokens,
     headers,
     fields,
-    records,
-    count: records.length
+    count: tokens.length
   };
 }
 
@@ -284,3 +302,5 @@ function by(keys) {
     return 0;
   }
 }
+
+logPerformance(alignForComparison, control, test, ['case', 'person', 'provider', 'check date']);
