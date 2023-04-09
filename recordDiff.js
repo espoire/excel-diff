@@ -207,7 +207,15 @@ function blankLines(line) {
 // This function only given a name to make the profiling logs more readable.
 // Otherwise, we'd just use an arrow function in-line.
 function toRecord(line) {
-  const record = line.split('\t').map(trim);
+  const record = line.split('\t');
+
+  // Replace in-place (instead of .map()) for memory usage.
+  // No helper function for function call overhead.
+  // (This section is HOT.)
+  for (let i = 0; i < record.length; i++) {
+    record[i] = record[i].trim();
+  }
+
   record.push(line);
   return record;
 }
