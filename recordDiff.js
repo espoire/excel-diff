@@ -1,5 +1,4 @@
 // TODOs
-// Store records as arrays, not dicts
 // Group records by mustMatches
 
 function alignForComparison(control, test, mustMatches = []) {
