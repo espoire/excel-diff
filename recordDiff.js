@@ -15,7 +15,6 @@ function alignForComparison(control, test, mustMatches = []) {
     testRecords.headers,
     pairs
   );
-  copy(pasteableText);
 
   return {
     count: pairs.length,
@@ -81,7 +80,6 @@ function allIntegersLessThan(max) {
 function pairRecords(controlRecords, testRecords, mustMatches) {
   const fieldCount = controlRecords.fields.length;
 
-  // TODO move to helper
   const mustMatchIndecies = mustMatches.map(field =>
     controlRecords.fields.indexOf(field)
   );
@@ -89,7 +87,6 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
     !mustMatchIndecies.includes(index)
   );
 
-  // TODO move to helper
   controlRecords.tokens.sort(by(mustMatchIndecies));
   testRecords   .tokens.sort(by(mustMatchIndecies));
 
