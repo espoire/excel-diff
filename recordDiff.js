@@ -1,6 +1,11 @@
 function alignForComparison(control, test, mustMatches = []) {
   const controlRecords = toRecords(control);
   const    testRecords = toRecords(test);
+
+  return alignForComparisonInnerHelper(controlRecords, testRecords, mustMatches);
+}
+
+export function alignForComparisonInnerHelper(controlRecords, testRecords, mustMatches) {
   mustMatches = mustMatches.map(toFieldName);
 
   validateFields(controlRecords.fields, testRecords.fields);
@@ -100,7 +105,7 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
   const mustMatchIndecies = mustMatches.map(field =>
     controlRecords.fields.indexOf(field)
   );
-  optionalMatchIndecies = allIntegersLessThan(fieldCount).filter(index =>
+  const optionalMatchIndecies = allIntegersLessThan(fieldCount).filter(index =>
     !mustMatchIndecies.includes(index)
   );
 
@@ -235,7 +240,18 @@ function toRecord(line) {
   return record;
 }
 
-function toRecords(raw) {
+/**
+ * @param {string} raw The raw text of a range pasted from a spreadsheet.
+ * @returns {{
+ *  tokens: string[][],
+ *  headers: string[],
+ *  fields: string[],
+ *  count: number
+ * }}
+ */
+export function toRecords(raw) {
+  if (typeof raw !== 'string' || !raw.length) return null;
+
   const tokens = raw.split('\n').filter(blankLines);
 
   // Replace in-place (instead of .map()) for memory usage.

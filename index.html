@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="./main.css" type="text/css" rel="stylesheet" />
+  <script src="./main.js" type="module" defer></script>
+  
+	<title>Spreadsheet Record Matcher</title>
+</head>
+<body>
+  <header>
+    <div style="display: flex;">
+      <div style="flex: 1; padding: 1em;">
+        <label for="original">Paste <b>original</b> table from spreadsheet, including column headers:</label><br />
+        <textarea id="original" class="pasteOnly" name="original" rows="4"></textarea>
+      </div>
+      <div style="flex: 1; padding: 1em;">
+        <label for="altered">Paste <b>altered</b> table from spreadsheet, including column headers:</label><br />
+        <textarea id="altered" class="pasteOnly" name="altered" rows="4"></textarea>
+      </div>
+    </div>
+    <div style="display: flex; justify-content: center;">
+      <button id="clear">❌ Clear</button>
+    </div>
+  </header>
+	<main>
+    <label for="checkboxesContainer">Which columns are your primary keys?</label>
+    <div id="checkboxesContainer"></div>
+  </main>
+  <footer>
+    <div style="display: flex; justify-content: center;">
+      <button id="compare">🔍 Compare</button>
+    </div>
+    <div>
+      <label for="compared">Copy/paste this back into your spreadhseet.</label><br />
+      <textarea id="compared" name="compared" rows="4"></textarea>
+    </div>
+  </footer>
+</body>
+</html>
