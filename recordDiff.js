@@ -124,6 +124,27 @@ function pairRecords(controlRecords, testRecords, mustMatches) {
       fieldCount
     ));
   }
+  
+  for (const key of testMap.keys()) {
+	if (controlMap.has(key)) continue;
+    const control = controlMap.get(key) || [];
+    const test = testMap.get(key);
+
+    pairs.push(pairRecordsInner(
+      control,
+      test,
+      optionalMatchIndecies,
+      fieldCount
+    ));
+  }
+  
+  // pairs.sort(byMapFn(function (group) {
+  //   if (!group.length) return null;
+  //   const row = group[0];
+  //   if (row.control && row.control[1]) return row.control[1];
+  //   if (row.test && row.test[1]) return row.test[1];
+  //   return null;
+  // }));
 
   // TODO move into return value
   console.log(comparisons);
@@ -345,6 +366,16 @@ function by(keys) {
       if (firstVal < secondVal) return -1;
       if (firstVal > secondVal) return 1;
     }
+    return 0;
+  }
+}
+
+function byMapFn(mapFn) {
+  return function sortByMapFn(first, second) {
+    const firstVal = mapFn(first);
+    const secondVal = mapFn(second);
+    if (firstVal < secondVal) return -1;
+    if (firstVal > secondVal) return 1;
     return 0;
   }
 }
